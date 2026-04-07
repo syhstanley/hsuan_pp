@@ -26,7 +26,7 @@
   - **Q2-1**：修改程式讓 assembly 出現 `vmovaps`（aligned move）而非 `vmovups`
 - [ ] **2.5** 跑三種設定比較效能
   - **Q2-2**：記錄 no-vec / SSE / AVX2 的執行時間，計算加速比，推論 vector register 位元寬度
-- [ ] **2.6** 看 `test2.cpp` 和 `test3.cpp` 的向量化行為
-  - 對 `test2` 套用 patch（`patch -i ./test2.cpp.patch`），觀察前後 assembly 差異
-  - 對 `test3` 加上 `-ffast-math`，觀察 `addsd` → `addpd` 的變化
+- [ ] **2.6** 看 `test2.c` 和 `test3.c` 的向量化行為
+  - 觀察 `test2.c` 的 max() 改寫方式對 assembly 的影響
+  - 對 `test3.c` 加上 `-ffast-math`，觀察 `addsd` → `addpd` 的變化
   - **Q2-3**：解釋為什麼改寫後 compiler 產生完全不同的 assembly
