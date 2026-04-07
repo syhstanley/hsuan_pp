@@ -1,13 +1,9 @@
-# Parallel Programming
-Lecturer: 游逸平\
-Semester: 2024 Fall
-## Content
-Spec and code. Note that the *.pdf are specs for previous years because I can not find the one for my course I took. Details might be different. I save it to pdf for smaller file size, please visit [PP-f20](https://nycu-sslab.github.io/PP-f20/) for better version.
-- hw0: calculate pi with monte-carlo method
-- hw1: SIMD programming
-- hw2: Multi-thread Programming, PThread, std::thread
-- hw3: OpenMP Programming
-- hw4: MPI Programming
-- hw5: CUDA Programming
-- hw6: OpenCL Programming
-- final project: Parallelization of Sudoku Solvers: A Comparative Study of Brute Force and Backtracking
+# 瑄的平行程式設計教學
+
+NYCU CS 平行程式設計課程作業，用來學習以下主題：
+
+1. **HW1** — Bottleneck 分析（SIMD、效能 profiling）
+2. **HW2** — Thread + Mutex（pthread、race condition）
+3. **HW3** — OpenMP（共享記憶體平行化）
+4. **HW4** — CUDA（GPU 平行運算）
+5. **HW5** — MPI（分散式記憶體平行化）
