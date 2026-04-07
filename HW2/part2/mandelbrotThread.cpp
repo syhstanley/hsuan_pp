@@ -13,48 +13,9 @@ typedef struct
     int *output;
     int threadId;
     int numThreads;
-    int totalPixels;
-    int pixelsPerThread;
-    float* xPos;
-    float* yPos;
 
 } WorkerArgs;
 
-static inline int mandel(float c_re, float c_im, int count)
-{
-  float z_re = c_re, z_im = c_im;
-  int i;
-  for (i = 0; i < count; ++i)
-  {
-
-    if (z_re * z_re + z_im * z_im > 4.f)
-        return i;
-
-    float new_re = z_re * z_re - z_im * z_im;
-    float new_im = 2.f * z_re * z_im;
-    z_re = c_re + new_re;
-    z_im = c_im + new_im;
-  }
-
-  return i;
-}
-
-void mandelbrotRow(
-    float x0, float y0, float x1, float y1,
-    float* xPos, float* yPos,
-    int width, int startRow,
-    int maxIterations,
-    int output[])
-{
-  int index = startRow * width;
-  
-  for (int i = 0; i < width; ++i)
-  {
-    output[index] = mandel(xPos[i], yPos[startRow], maxIterations);
-    index++;
-  }
-  
-}
 
 //
 // workerThreadStart --
@@ -71,8 +32,7 @@ void workerThreadStart(WorkerArgs *const args)
   // Of course, you can copy mandelbrotSerial() to this file and
   // modify it to pursue a better performance.
 
-  for (unsigned int i = args->threadId; i < args->height; i += args->numThreads)
-    mandelbrotRow(args->x0, args->y0, args->x1, args->y1, args->xPos, args->yPos, args->width, i, args->maxIterations, args->output);
+  printf("Hello world from thread %d\n", args->threadId);
 }
 
 //
@@ -95,20 +55,8 @@ void mandelbrotThread(
 
     // Creates thread objects that do not yet represent a thread.
     std::thread workers[MAX_THREADS];
-    WorkerArgs args[MAX_THREADS] = {};
+    WorkerArgs args[MAX_THREADS];
 
-    int total_pixels = width * height;
-    int pixels_per_thread = total_pixels / numThreads;
-
-    float dx = (x1 - x0) / width;
-    float dy = (y1 - y0) / height;
-    float *xPos = new float[width];
-    float *yPos = new float[height];
-    for (int i = 0; i < width; i++)
-        xPos[i] = x0 + i * dx;
-    for (int i = 0; i < height; i++)
-        yPos[i] = y0 + i * dy;
-    
     for (int i = 0; i < numThreads; i++)
     {
         // TODO FOR PP STUDENTS: You may or may not wish to modify
@@ -123,10 +71,6 @@ void mandelbrotThread(
         args[i].maxIterations = maxIterations;
         args[i].numThreads = numThreads;
         args[i].output = output;
-        args[i].totalPixels = total_pixels;
-        args[i].pixelsPerThread = pixels_per_thread;
-        args[i].xPos = xPos;
-        args[i].yPos = yPos;
         args[i].threadId = i;
     }
 
