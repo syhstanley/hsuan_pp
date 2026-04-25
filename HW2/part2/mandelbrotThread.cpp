@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <thread>
+#include <chrono>
 
 
 typedef struct
@@ -16,6 +17,22 @@ typedef struct
 
 } WorkerArgs;
 
+static inline int mandel(float c_re, float c_im, int count)
+{
+  float z_re = c_re, z_im = c_im;
+  int i;
+  for (i = 0; i < count; ++i)
+  {
+    if (z_re * z_re + z_im * z_im > 4.f)
+      break;
+
+    float new_re = z_re * z_re - z_im * z_im;
+    float new_im = 2.f * z_re * z_im;
+    z_re = c_re + new_re;
+    z_im = c_im + new_im;
+  }
+  return i;
+}
 
 //
 // workerThreadStart --
@@ -23,16 +40,27 @@ typedef struct
 // Thread entrypoint.
 void workerThreadStart(WorkerArgs *const args)
 {
+  auto t0 = std::chrono::high_resolution_clock::now();
 
-  // TODO FOR PP STUDENTS: Implement the body of the worker
-  // thread here. Each thread could make a call to mandelbrotSerial()
-  // to compute a part of the output image. For example, in a
-  // program that uses two threads, thread 0 could compute the top
-  // half of the image and thread 1 could compute the bottom half.
-  // Of course, you can copy mandelbrotSerial() to this file and
-  // modify it to pursue a better performance.
+  const float dx = (args->x1 - args->x0) / args->width;
+  const float dy = (args->y1 - args->y0) / args->height;
 
-  printf("Hello world from thread %d\n", args->threadId);
+  // Interleaved row decomposition balances heavy/light rows better than
+  // contiguous blocks for Mandelbrot workloads.
+  for (int j = args->threadId; j < (int)args->height; j += args->numThreads)
+  {
+    float y = args->y0 + j * dy;
+    int rowBase = j * args->width;
+    for (int i = 0; i < (int)args->width; ++i)
+    {
+      float x = args->x0 + i * dx;
+      args->output[rowBase + i] = mandel(x, y, args->maxIterations);
+    }
+  }
+
+  auto t1 = std::chrono::high_resolution_clock::now();
+  double elapsedMs = std::chrono::duration<double, std::milli>(t1 - t0).count();
+  printf("[thread %d] %.3f ms\n", args->threadId, elapsedMs);
 }
 
 //
