@@ -42,13 +42,39 @@ void absVector(float *values, float *output, int N)
 
 void clampedExpVector(float *values, int *exponents, float *output, int N)
 {
-  //
-  // PP STUDENTS TODO: Implement your vectorized version of
-  // clampedExpSerial() here.
-  //
-  // Your solution should work for any value of
-  // N and VECTOR_WIDTH, not just when VECTOR_WIDTH divides N
-  //
+  __pp_vec_float x;
+  __pp_vec_float result;
+  __pp_vec_float clampValue = _pp_vset_float(9.999999f);
+  __pp_vec_int y;
+  __pp_vec_int count;
+  __pp_vec_int zeroInt = _pp_vset_int(0);
+  __pp_vec_int oneInt = _pp_vset_int(1);
+  __pp_mask maskAll, maskCount;
+
+  for (int i = 0; i < N; i += VECTOR_WIDTH)
+  {
+    int width = (N - i < VECTOR_WIDTH) ? (N - i) : VECTOR_WIDTH;
+    maskAll = _pp_init_ones(width);
+
+    _pp_vload_float(x, values + i, maskAll);
+    _pp_vload_int(y, exponents + i, maskAll);
+
+    // result starts from 1.0f; lanes with exponent 0 stay 1.0f
+    _pp_vset_float(result, 1.f, maskAll);
+    _pp_vmove_int(count, y, maskAll);
+
+    _pp_vgt_int(maskCount, count, zeroInt, maskAll);
+    while (_pp_cntbits(maskCount) > 0)
+    {
+      _pp_vmult_float(result, result, x, maskCount);
+      _pp_vsub_int(count, count, oneInt, maskCount);
+      _pp_vgt_int(maskCount, count, zeroInt, maskAll);
+    }
+
+    _pp_vgt_float(maskCount, result, clampValue, maskAll);
+    _pp_vmove_float(result, clampValue, maskCount);
+    _pp_vstore_float(output + i, result, maskAll);
+  }
 }
 
 // returns the sum of all elements in values
@@ -56,10 +82,25 @@ void clampedExpVector(float *values, int *exponents, float *output, int N)
 // You can assume VECTOR_WIDTH is a power of 2
 float arraySumVector(float *values, int N)
 {
+  __pp_vec_float sum = _pp_vset_float(0.f);
+  __pp_vec_float x;
+  __pp_mask maskAll = _pp_init_ones();
 
-  //
-  // PP STUDENTS TODO: Implement your vectorized version of arraySumSerial here
-  //
+  for (int i = 0; i < N; i += VECTOR_WIDTH)
+  {
+    _pp_vload_float(x, values + i, maskAll);
+    _pp_vadd_float(sum, sum, x, maskAll);
+  }
 
-  return 0.0;
+  // Tree-style horizontal reduction in O(log2(VECTOR_WIDTH)).
+  for (int width = VECTOR_WIDTH; width > 1; width >>= 1)
+  {
+    _pp_hadd_float(sum, sum);
+    _pp_interleave_float(sum, sum);
+  }
+
+  float result = 0.f;
+  __pp_mask maskFirst = _pp_init_ones(1);
+  _pp_vstore_float(&result, sum, maskFirst);
+  return result;
 }

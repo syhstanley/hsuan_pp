@@ -7,7 +7,7 @@
 void usage(const char *progname);
 void initValue(float *values1, float *values2, double *value3, float *output, unsigned int N);
 
-extern void test1(float *a, float *b, float *c, int N);
+extern void test1(float *__restrict a, float *__restrict b, float *__restrict c, int N);
 extern void test2(float *__restrict a, float *__restrict b, float *__restrict c, int N);
 extern double test3(double *__restrict a, int N) ;
 
@@ -54,18 +54,29 @@ int main(int argc, char **argv) {
   float *output = (float *)__builtin_alloca_with_align(N * sizeof(float), 32);
   initValue(values1, values2, values3, output, N);
 
+  volatile double sink = 0.0;
   printf("Running test%d()...\n", whichTestToRun);
   fasttime_t time1 = gettime();
   switch (whichTestToRun) {
-    case 1: test1(values1, values2, output, N); break;
-    case 2: test2(values1, values2, output, N); break;
-    case 3: test3(values3, N); break;
+    case 1:
+      test1(values1, values2, output, N);
+      for (int k = 0; k < N; k += 64) sink += output[k];
+      break;
+    case 2:
+      test2(values1, values2, output, N);
+      for (int k = 0; k < N; k += 64) sink += output[k];
+      break;
+    case 3:
+      sink += test3(values3, N);
+      break;
   }
   fasttime_t time2 = gettime();
 
   double elapsedf = tdiff(time1, time2);
   printf("Elapsed execution time of the loop in test%d():\n", whichTestToRun);
   printf("%lfsec (N: %d, I: %d)\n", elapsedf, N, I);
+  // Keep this print to prevent optimizer from dropping benchmark work.
+  printf("sink=%f\n", sink);
   return 0;
 }
 

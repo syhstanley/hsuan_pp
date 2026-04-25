@@ -2,7 +2,7 @@ TARGET := test_auto_vectorize
 
 OBJS := main.o test1.o test2.o test3.o
 
-CC := clang
+CC ?= gcc
 
 CFLAGS := -O3 -std=c11 -Wall -D_POSIX_C_SOURCE=200809L
 
@@ -10,10 +10,10 @@ ifeq ($(ASSEMBLE),1)
 	CFLAGS += -S
 endif
 ifeq ($(VECTORIZE),1)
-	CFLAGS += -Rpass=loop-vectorize -Rpass-missed=loop-vectorize -Rpass-analysis=loop-vectorize
+	CFLAGS += -ftree-vectorize -fopt-info-vec-optimized -fopt-info-vec-missed
 	SUFFIX := .vec
 else
-	CFLAGS += -fno-vectorize
+	CFLAGS += -fno-tree-vectorize
 	SUFFIX := .novec
 endif
 ifeq ($(RESTRICT),1)
